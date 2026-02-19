@@ -2,141 +2,155 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Heart Animation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Misora</title>
+
 <style>
 body{
     margin:0;
     overflow:hidden;
-    background:#000;
+    background:#ffeef2;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    font-family:'Segoe UI',sans-serif;
+    transition:background 1.5s ease;
 }
-canvas{
-    position:absolute;
-    top:0;
-    left:0;
-}
-#start{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    padding:15px 40px;
-    font-size:20px;
+#ui-layer{text-align:center;z-index:10;position:relative;}
+h1{color:#d63384;margin-bottom:40px;}
+.btn-group{display:flex;gap:20px;justify-content:center;}
+button{
+    padding:15px 30px;
+    font-size:1.1rem;
     border:none;
     border-radius:30px;
-    background:#ff2e63;
-    color:white;
     cursor:pointer;
-    z-index:10;
+}
+#yes-btn{background:#ff4d6d;color:white;}
+#no-btn{background:#adb5bd;color:white;position:absolute;}
+.night{background:#05070a !important;}
+canvas{position:absolute;top:0;left:0;}
+#love-message{
+    position:absolute;
+    top:20%;
+    width:100%;
+    text-align:center;
+    font-size:2rem;
+    color:#ff85a2;
+    opacity:0;
+    transition:opacity 3s;
+    text-shadow:0 0 20px #ff4d6d;
 }
 </style>
 </head>
+
 <body>
 
-<button id="start">💗 Start</button>
+<div id="ui-layer">
+<h1>ねえ、君が好き。<br>これって両想いかな？</h1>
+<div class="btn-group">
+<button id="yes-btn">はい 💕</button>
+<button id="no-btn">いいえ</button>
+</div>
+</div>
+
+<div id="love-message">私も愛してる、ミソラ。</div>
 <canvas id="canvas"></canvas>
 
 <script>
-var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+canvas.width=innerWidth;
+canvas.height=innerHeight;
 
-var audio = new Audio("https://files.catbox.moe/p9r1m6.mp3");
-audio.loop = true;
+const yesBtn=document.getElementById("yes-btn");
+const noBtn=document.getElementById("no-btn");
+const loveMsg=document.getElementById("love-message");
 
-var Point = (function () {
+// Музыка (замени на свою ссылку если нужно)
+const audio=new Audio("https://files.catbox.moe/p9r1m6.mp3");
+audio.loop=true;
 
-    function Point(x, y) {
-        this.x = (typeof x !== 'undefined') ? x : 0;
-        this.y = (typeof y !== 'undefined') ? y : 0;
-    }
+noBtn.addEventListener("mouseover",()=>{
+    noBtn.style.left=Math.random()*(innerWidth-100)+"px";
+    noBtn.style.top=Math.random()*(innerHeight-50)+"px";
+});
 
-    Point.prototype.clone = function () {
-        return new Point(this.x, this.y);
-    };
+let particles=[];
+let heartPoints=[];
+let time=0;
 
-    return Point;
-
-})();
-
-var particles = [];
-var heartPoints = [];
-var time = 0;
-
-function createHeartPoints() {
-    heartPoints = [];
-    var scale = Math.min(canvas.width, canvas.height) / 40;
-
-    for (var t = 0; t < Math.PI * 2; t += 0.02) {
-        var x = 16 * Math.pow(Math.sin(t), 3);
-        var y = -(13 * Math.cos(t)
-            - 5 * Math.cos(2 * t)
-            - 2 * Math.cos(3 * t)
-            - Math.cos(4 * t));
-
-        heartPoints.push(new Point(x * scale, y * scale));
+// создаём точки сердца
+function createHeartPoints(){
+    heartPoints=[];
+    const scale=Math.min(innerWidth/40,16);
+    for(let t=0;t<Math.PI*2;t+=0.05){
+        let x=16*Math.pow(Math.sin(t),3);
+        let y=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+        heartPoints.push({x:x*scale,y:y*scale});
     }
 }
 
-function Particle(target) {
-    this.position = new Point(
-        Math.random() * canvas.width,
-        Math.random() * canvas.height
-    );
-    this.target = target.clone();
-    this.speed = 0.08;
-    this.size = Math.random() * 2 + 1;
+// частица
+class Particle{
+    constructor(target){
+        this.x=Math.random()*canvas.width;
+        this.y=Math.random()*canvas.height;
+        this.tx=canvas.width/2+target.x;
+        this.ty=canvas.height/2+target.y;
+        this.size=Math.random()*2+1;
+        this.speed=0.05;
+    }
+    update(){
+        this.x+=(this.tx-this.x)*this.speed;
+        this.y+=(this.ty-this.y)*this.speed;
+    }
+    draw(pulse){
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,this.size*pulse,0,Math.PI*2);
+        ctx.fillStyle="#ff4d6d";
+        ctx.shadowBlur=20;
+        ctx.shadowColor="#ff4d6d";
+        ctx.fill();
+    }
 }
 
-Particle.prototype.update = function () {
-    this.position.x += (canvas.width/2 + this.target.x - this.position.x) * this.speed;
-    this.position.y += (canvas.height/2 + this.target.y - this.position.y) * this.speed;
-};
-
-Particle.prototype.draw = function (pulse) {
-    ctx.beginPath();
-    ctx.arc(this.position.x, this.position.y, this.size * pulse, 0, Math.PI * 2);
-    ctx.fillStyle = "#ff2e63";
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = "#ff2e63";
-    ctx.fill();
-};
-
-function animate() {
+function animate(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    time += 0.05;
-    var pulse = 1 + Math.sin(time) * 0.15;
+    time+=0.05;
+    let pulse=1+Math.sin(time)*0.1; // биение
 
-    for (var i=0;i<particles.length;i++){
-        particles[i].update();
-        particles[i].draw(pulse);
-    }
+    particles.forEach(p=>{
+        p.update();
+        p.draw(pulse);
+    });
 
     requestAnimationFrame(animate);
 }
 
-document.getElementById("start").addEventListener("click", function(){
+yesBtn.addEventListener("click",()=>{
+    document.getElementById("ui-layer").style.display="none";
+    document.body.classList.add("night");
+    loveMsg.style.opacity="1";
 
-    this.style.display="none";
     audio.play();
 
     createHeartPoints();
 
-    for (var i=0;i<heartPoints.length;i++){
-        (function(i){
-            setTimeout(function(){
-                particles.push(new Particle(heartPoints[i]));
-            }, i*5);
-        })(i);
-    }
+    heartPoints.forEach((point,i)=>{
+        setTimeout(()=>{
+            particles.push(new Particle(point));
+        },i*8); // постепенное формирование
+    });
 
     animate();
 });
 
-window.addEventListener("resize", function(){
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+window.addEventListener("resize",()=>{
+    canvas.width=innerWidth;
+    canvas.height=innerHeight;
     createHeartPoints();
 });
 </script>
