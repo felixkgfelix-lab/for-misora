@@ -5,17 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>For Misora</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #ffeef2;
-            font-family: 'Segoe UI', sans-serif;
-            transition: background 1.5s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+        body { margin: 0; overflow: hidden; background-color: #ffeef2; font-family: 'Segoe UI', sans-serif; transition: background 1.5s ease; display: flex; justify-content: center; align-items: center; height: 100vh; }
         #ui-layer { text-align: center; z-index: 10; position: relative; }
         h1 { color: #d63384; font-size: 1.8rem; margin-bottom: 40px; }
         .btn-group { display: flex; justify-content: center; gap: 20px; }
@@ -24,22 +14,10 @@
         #no-btn { background-color: #adb5bd; color: white; position: absolute; transition: 0.1s; }
         .night { background-color: #05070a !important; }
         canvas { position: absolute; top: 0; left: 0; }
-        #love-message {
-            position: absolute;
-            color: #ff85a2;
-            font-size: 2rem;
-            opacity: 0;
-            text-shadow: 0 0 15px #ff4d6d;
-            transition: opacity 2s;
-            z-index: 20;
-            text-align: center;
-            width: 100%;
-            top: 20%;
-        }
+        #love-message { position: absolute; color: #ff85a2; font-size: 2rem; opacity: 0; text-shadow: 0 0 15px #ff4d6d; transition: opacity 2s; z-index: 20; text-align: center; width: 100%; top: 20%; }
     </style>
 </head>
 <body>
-
     <div id="ui-layer">
         <h1>ねえ、君が好き。<br>これって両想いかな？</h1>
         <div class="btn-group">
@@ -47,7 +25,6 @@
             <button id="no-btn">いいえ</button>
         </div>
     </div>
-
     <div id="love-message">私も愛してる、ミソラ。</div>
     <canvas id="heartCanvas"></canvas>
 
@@ -57,9 +34,7 @@
         const yesBtn = document.getElementById('yes-btn');
         const noBtn = document.getElementById('no-btn');
         const loveMsg = document.getElementById('love-message');
-        
-        // Музыка запускается при клике
-        const audio = new Audio('https://files.catbox.moe/p9r1m6.mp3'); // Ссылка на музыку Propose
+        const audio = new Audio('https://files.catbox.moe/p9r1m6.mp3');
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -70,34 +45,47 @@
             noBtn.style.left = x + 'px';
             noBtn.style.top = y + 'px';
         }
-
         noBtn.addEventListener('mouseover', moveNo);
         noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo(); });
 
         let particles = [];
-        const particleCount = 450;
+        const particleCount = 600; // Больше частиц для плотности
 
         class Particle {
-            constructor(t) {
-                this.t = t;
-                this.size = Math.random() * 1.5 + 1;
-                this.phi = Math.random() * Math.PI * 2;
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.t = Math.random() * Math.PI * 2;
+                this.size = Math.random() * 2 + 0.5;
+                this.v = Math.random() * 0.02 + 0.01;
+                this.alpha = Math.random();
+                this.sparkle = Math.random() * 0.05;
             }
             draw() {
                 const cx = canvas.width / 2;
                 const cy = canvas.height / 2;
-                const scale = Math.min(window.innerWidth / 45, 13);
+                const scale = Math.min(window.innerWidth / 40, 16);
                 
-                // Формула сердца из видео
-                const x = 16 * Math.pow(Math.sin(this.t), 3);
-                const y = -(13 * Math.cos(this.t) - 5 * Math.cos(2 * this.t) - 2 * Math.cos(3 * this.t) - Math.cos(4 * this.t));
+                // Основная формула сердца
+                let x = 16 * Math.pow(Math.sin(this.t), 3);
+                let y = -(13 * Math.cos(this.t) - 5 * Math.cos(2 * this.t) - 2 * Math.cos(3 * this.t) - Math.cos(4 * this.t));
                 
-                const pulse = Math.sin(Date.now() * 0.003 + this.phi) * 3;
+                // Эффект пульсации (дыхания)
+                const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.05;
                 
+                // Добавляем случайное дрожание каждой частице как в видео
+                const driftX = (Math.random() - 0.5) * 2;
+                const driftY = (Math.random() - 0.5) * 2;
+
                 ctx.fillStyle = '#ff85a2';
-                ctx.globalAlpha = 0.7 + Math.sin(Date.now() * 0.005) * 0.3;
+                // Мерцание (sparkle)
+                this.alpha += this.sparkle;
+                if (this.alpha > 1 || this.alpha < 0.3) this.sparkle *= -1;
+                
+                ctx.globalAlpha = this.alpha;
                 ctx.beginPath();
-                ctx.arc(cx + x * (scale + pulse), cy + y * (scale + pulse), this.size, 0, Math.PI * 2);
+                ctx.arc(cx + x * scale * pulse + driftX, cy + y * scale * pulse + driftY, this.size, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -113,9 +101,8 @@
             document.body.classList.add('night');
             loveMsg.style.opacity = '1';
             audio.play();
-            
             for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle((i / particleCount) * Math.PI * 2));
+                particles.push(new Particle());
             }
             animate();
         });
