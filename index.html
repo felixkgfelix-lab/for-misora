@@ -18,11 +18,10 @@
         }
         #ui-layer { text-align: center; z-index: 10; position: relative; }
         h1 { color: #d63384; font-size: 1.8rem; margin-bottom: 40px; }
-        .btn-group { display: flex; justify-content: center; gap: 20px; position: relative; width: 300px; height: 50px; }
+        .btn-group { display: flex; justify-content: center; gap: 20px; }
         button { padding: 15px 30px; font-size: 1.1rem; border: none; border-radius: 30px; cursor: pointer; touch-action: none; }
-        #yes-btn { background-color: #ff4d6d; color: white; z-index: 11; }
-        /* Изменено: начальное положение кнопки "Нет" теперь зафиксировано через JS или абсолют, чтобы она не прыгала сразу */
-        #no-btn { background-color: #adb5bd; color: white; position: absolute; left: 170px; transition: 0.1s; }
+        #yes-btn { background-color: #ff4d6d; color: white; }
+        #no-btn { background-color: #adb5bd; color: white; position: absolute; }
         .night { background-color: #05070a !important; }
         canvas { position: absolute; top: 0; left: 0; }
         #love-message {
@@ -63,52 +62,52 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        // --- Изменение кнопки "Нет" ---
+        // Кнопка "Нет"
         function moveNo() {
-            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
-            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
+            const padding = 50;
+            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - padding);
+            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight - padding);
             noBtn.style.left = x + 'px';
             noBtn.style.top = y + 'px';
-            noBtn.style.position = 'fixed'; // Гарантируем свободное перемещение по всему экрану
         }
 
         noBtn.addEventListener('mouseover', moveNo);
         noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo(); });
 
-        // --- Изменение сердца (Твоя новая логика) ---
-        let particles = [];
+        // Сердце по твоей логике
+        let heartPoints = [];
         let pulseTime = 0;
 
-        class Particle {
-            constructor(t) {
-                this.t = t;
-                this.size = Math.random() * 2 + 1;
-            }
-            
-            draw() {
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                
-                // Твоя формула пульсации и масштаба
-                const pulse = 1 + Math.sin(pulseTime) * 0.05; 
-                const scale = 15 * pulse;
-                
-                // Твоя формула координат x и y
-                const x = centerX + scale * (16 * Math.pow(Math.sin(this.t), 3));
-                const y = centerY - scale * (13 * Math.cos(this.t) - 5 * Math.cos(2 * this.t) - 2 * Math.cos(3 * this.t) - Math.cos(4 * this.t));
-                
-                ctx.fillStyle = '#ff85a2';
-                ctx.globalAlpha = 0.6;
-                ctx.beginPath();
-                ctx.arc(x, y, this.size, 0, Math.PI * 2);
-                ctx.fill();
+        function generateHeartShape() {
+            heartPoints = [];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const pulse = 1 + Math.sin(pulseTime) * 0.05;
+            const scale = 15 * pulse;
+            const steps = 450; 
+
+            for (let i = 0; i < steps; i++) {
+                const t = (i / steps) * Math.PI * 2;
+                const x = centerX + scale * (16 * Math.pow(Math.sin(t), 3));
+                const y = centerY - scale * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                heartPoints.push({ x, y });
             }
         }
 
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            pulseTime += 0.05; // Скорость биения сердца
-            particles.forEach(p => p.draw());
+            pulseTime += 0.05;
+            generateHeartShape();
+
+            ctx.fillStyle = '#ff85a2';
+            ctx.globalAlpha = 0.6;
+            
+            heartPoints.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
             requestAnimationFrame(animate);
         }
 
@@ -116,13 +115,7 @@
             document.getElementById('ui-layer').style.display = 'none';
             document.body.classList.add('night');
             loveMsg.style.opacity = '1';
-            audio.play().catch(e => console.log("Music ready"));
-            
-            const steps = 450; // Количество точек
-            for (let i = 0; i < steps; i++) {
-                const t = (i / steps) * Math.PI * 2;
-                particles.push(new Particle(t));
-            }
+            audio.play().catch(() => {});
             animate();
         });
 
