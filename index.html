@@ -9,13 +9,12 @@
             margin: 0;
             overflow: hidden;
             background-color: #05070a;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', 'Meiryo', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
         }
-        /* Луна */
         .moon {
             position: absolute;
             top: 40px;
@@ -33,14 +32,21 @@
             position: relative;
         }
         h1 { color: #ff85a2; font-size: 1.6rem; margin-bottom: 30px; text-shadow: 0 0 10px rgba(255,77,109,0.3); }
-        .btn-group { display: flex; justify-content: center; gap: 20px; }
+        .btn-group { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 40px; 
+            width: 300px; 
+            height: 60px;
+            margin: 0 auto;
+        }
         button { padding: 12px 28px; font-size: 1rem; border: none; border-radius: 30px; cursor: pointer; touch-action: none; }
-        #yes-btn { background: linear-gradient(45deg, #ff4d6d, #ff85a2); color: white; box-shadow: 0 0 20px rgba(255, 77, 109, 0.5); }
-        #no-btn { background-color: #343a40; color: white; position: absolute; }
+        #yes-btn { background: linear-gradient(45deg, #ff4d6d, #ff85a2); color: white; box-shadow: 0 0 20px rgba(255, 77, 109, 0.5); z-index: 11; }
+        #no-btn { background-color: #343a40; color: white; position: absolute; margin-left: 120px; z-index: 12; }
         
         canvas { position: absolute; top: 0; left: 0; z-index: 2; }
         
-        /* Текст внутри сердца */
         #love-message {
             position: absolute;
             top: 50%;
@@ -71,7 +77,7 @@
         </div>
     </div>
 
-    <div id="love-message">私も愛してる、ミсола。</div>
+    <div id="love-message">私も愛してる、ミソラ。</div>
     <canvas id="heartCanvas"></canvas>
 
     <script>
@@ -87,20 +93,23 @@
         canvas.height = window.innerHeight;
 
         function moveNo() {
-            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
-            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
+            const padding = 50;
+            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - padding);
+            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight - padding);
+            noBtn.style.position = 'fixed';
             noBtn.style.left = x + 'px';
             noBtn.style.top = y + 'px';
+            noBtn.style.margin = '0';
         }
 
         noBtn.addEventListener('mouseover', moveNo);
+        noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo(); });
 
         let heartParticles = [];
         let stars = [];
         let pulseTime = 0;
         let showHeart = false;
 
-        // Создание фонового космоса
         for(let i=0; i<150; i++) {
             stars.push({
                 x: Math.random() * canvas.width,
@@ -120,7 +129,6 @@
             }
             draw(cX, cY, scale) {
                 const t = this.t;
-                // Твоя формула сердца
                 let x = 16 * Math.pow(Math.sin(t), 3);
                 let y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
                 
@@ -137,7 +145,6 @@
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Отрисовка звезд
             ctx.fillStyle = "white";
             stars.forEach(s => {
                 ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.001 + s.twinkle * 100) * 0.3;
@@ -161,11 +168,9 @@
             loveMsg.style.opacity = '1';
             audio.play().catch(() => {});
             
-            // Контур (розовый)
             for (let i = 0; i < 500; i++) {
                 heartParticles.push(new Particle((i / 500) * Math.PI * 2, false));
             }
-            // Звезды внутри (белые)
             for (let i = 0; i < 300; i++) {
                 heartParticles.push(new Particle(Math.random() * Math.PI * 2, true));
             }
